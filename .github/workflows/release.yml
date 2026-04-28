@@ -1,0 +1,107 @@
+name: Release (image + cosign keyless)
+
+# Triggered on every annotated tag matching v*. Each tag produces a
+# multi-arch OCI image (amd64+arm64) of the tetragon-bridge gRPC
+# server, pushed to GHCR + cosign-signed keyless (Fulcio cert via
+# GitHub OIDC, Rekor public log) + SBOM attestation.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag to publish (defaults to short SHA)'
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  GO_VERSION: '1.26.2'
+  REGISTRY: ghcr.io/ninsun-labs/tetragon-bridge
+  COSIGN_VERSION: v2.6.1
+
+jobs:
+  publish:
+    name: Build + sign + push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+          cache-dependency-path: '**/go.sum'
+
+      - name: Compute image tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push image
+        uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          push: true
+          provenance: true
+          sbom: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ env.REGISTRY }}:${{ steps.tag.outputs.tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+            org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: ${{ env.COSIGN_VERSION }}
+
+      - name: Sign image (keyless via GitHub OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: '1'
+        run: |
+          cosign sign --yes \
+            --oidc-issuer https://token.actions.githubusercontent.com \
+            ${{ env.REGISTRY }}@${{ steps.build.outputs.digest }}
+
+      # Single-quote the docker --format so bash forwards the {{ }}
+      # delimiters verbatim to docker's Go-template parser.
+      - name: Attach SBOM (cosign attestation)
+        run: |
+          cosign attest --yes \
+            --predicate <(docker buildx imagetools inspect \
+              ${{ env.REGISTRY }}:${{ steps.tag.outputs.tag }} \
+              --format '{{ json .SBOM.SPDX }}') \
+            --type spdxjson \
+            ${{ env.REGISTRY }}@${{ steps.build.outputs.digest }}
+
+      - name: Verify signature roundtrip
+        run: |
+          cosign verify \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp 'https://github.com/ninsun-labs/tetragon-bridge/.+' \
+            ${{ env.REGISTRY }}@${{ steps.build.outputs.digest }}

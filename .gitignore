@@ -1,0 +1,10 @@
+bin/
+dist/
+*.test
+*.out
+*.prof
+*.cov
+.idea/
+.vscode/
+*.swp
+*~
