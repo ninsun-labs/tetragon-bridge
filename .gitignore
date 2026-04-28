@@ -1,5 +1,7 @@
 bin/
 dist/
+# Compiled binary dropped at repo root by `go build ./...`
+/tetragon-bridge
 *.test
 *.out
 *.prof
