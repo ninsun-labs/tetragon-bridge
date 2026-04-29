@@ -3,26 +3,25 @@
 gRPC bridge that fronts the [Tetragon](https://tetragon.io) Hubble export
 and re-exposes process / network / syscall events as a typed Subscribe
 stream consumable by [`ninsun-labs/ugallu`](https://github.com/ninsun-labs/ugallu)
-operators (Wave 3 `tenant-escape`, Wave 4 `seccomp-gen`).
+operators (`tenant-escape`, `dns-detect` Tetragon-fallback,
+`seccomp-gen` training capture).
 
-The bridge runs as an in-cluster Deployment, separate from Tetragon
-itself. Tetragon stays upstream-vanilla; the bridge adds:
-- typed event filters (PROCESS_EXEC, PROCESS_KPROBE_TYPE_SYSCALL,
-  network_namespace_change)
-- per-subscriber rate limiting + buffered fanout
-- mTLS-ready endpoint (Pomerium-style; mTLS-on becomes default in
-  a follow-up post-`wave4-final`)
-
-> **Status**: pre-alpha. Skeleton only — no event forwarding yet. The
-> Subscribe gRPC + Tetragon-Hubble client wiring lands in v0.1.0
-> (Wave 4 Sprint 1 of the upstream ugallu roadmap).
+The bridge runs as an in-cluster DaemonSet next to Tetragon. Tetragon
+stays upstream-vanilla; the bridge adds:
+- typed event streams (`StreamProcessExec`, `StreamDNSQuery`,
+  `StreamFileOpen`) — operators only see what they need
+- per-subscriber bounded ring + drop-oldest-first backpressure
+- bearer-token auth interceptor
+- per-subscriber egress rate limit (token bucket)
+- a built-in `synthetic` source for lab/dev clusters that don't have
+  Tetragon installed yet
 
 ## Compatibility matrix
 
 | Bridge version | Tetragon | Notes |
 |---|---|---|
 | 0.0.1-alpha.1 | ≥ 1.0 | scaffold, no-op gRPC server |
-| 0.1.0 (planned) | ≥ 1.0, ≤ 1.x | full Subscribe stream |
+| 0.1.0 | ≥ 1.0, ≤ 1.x | typed Subscribe streams + synthetic source |
 
 ## Build + ship
 

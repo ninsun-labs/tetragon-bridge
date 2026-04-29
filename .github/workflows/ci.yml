@@ -17,6 +17,37 @@ env:
   GOLANGCI_LINT_VERSION: v2.11.4
 
 jobs:
+  proto-drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+          cache-dependency-path: '**/go.sum'
+      - name: Install protoc + plugins
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y protobuf-compiler
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+      - name: Regenerate + diff
+        run: |
+          tmp="$(mktemp -d)"
+          protoc -I=. \
+            --go_out="$tmp" --go_opt=paths=source_relative \
+            --go-grpc_out="$tmp" --go-grpc_opt=paths=source_relative \
+            proto/v1/bridge.proto
+          for f in bridge.pb.go bridge_grpc.pb.go; do
+            if ! diff -q "$tmp/proto/v1/$f" "proto/v1/$f"; then
+              echo "::error file=proto/v1/$f::Generated proto drift — re-run protoc"
+              diff "$tmp/proto/v1/$f" "proto/v1/$f" | head -50
+              exit 1
+            fi
+          done
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
