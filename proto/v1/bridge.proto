@@ -1,0 +1,172 @@
+// Copyright 2026 The ninsun-labs Authors.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package ninsun.tetragon_bridge.v1;
+
+option go_package = "github.com/ninsun-labs/tetragon-bridge/proto/v1;bridgev1";
+
+import "google/protobuf/timestamp.proto";
+
+// TetragonBridge fronts the upstream Tetragon Hubble GetEvents API and
+// re-exposes a small, typed surface tailored to ugallu detector
+// workloads. The bridge consumes the raw event firehose once
+// (single Tetragon connection per node), filters down to the kinds
+// the operators need, and fans out to N typed subscribers each with
+// its own per-subscriber buffer + rate limit.
+//
+// Three streams are exposed in v0.1.0:
+//   - StreamProcessExec: every PROCESS_EXEC (process tree edges,
+//     used by tenant-escape to detect privileged exec inside Pods).
+//   - StreamDNSQuery: kprobe-derived DNS lookups (used as the
+//     dns-detect Tetragon kprobe fallback when CoreDNS plugin is
+//     unreachable).
+//   - StreamFileOpen: open() syscall observations (used by
+//     seccomp-gen to record syscall surface during a training run).
+//
+// All streams are server-streaming. Backpressure: when a subscriber
+// can't keep up, the bridge keeps the last 10 000 events in a
+// per-subscriber ring before drop-oldest-first; the metric
+// ugallu_tetragon_bridge_dropped_total{stream,subscriber_id,reason}
+// surfaces the drop count for ops review.
+service TetragonBridge {
+  // StreamProcessExec emits one ProcessExec per PROCESS_EXEC event
+  // observed by Tetragon (after node-local rate limiting).
+  rpc StreamProcessExec(SubscribeRequest) returns (stream ProcessExec);
+
+  // StreamDNSQuery emits one DNSQuery per kprobe-observed DNS
+  // lookup. Used by dns-detect when its primary CoreDNS plugin
+  // backend is unreachable (degraded mode).
+  rpc StreamDNSQuery(SubscribeRequest) returns (stream DNSQuery);
+
+  // StreamFileOpen emits one FileOpen per open() syscall. Filtered
+  // server-side by Subject.target_pod when set on SubscribeRequest;
+  // unfiltered subscribes are rejected on a node-local DaemonSet
+  // because the volume would saturate the bridge.
+  rpc StreamFileOpen(SubscribeRequest) returns (stream FileOpen);
+}
+
+// SubscribeRequest is sent once at the start of any of the three
+// streams. The same shape is reused for all three to keep the wire
+// surface tight; per-stream filters are optional and ignored on
+// streams where they don't apply.
+message SubscribeRequest {
+  // SubscriberId is the operator-local identifier (e.g.
+  // "tenant-escape-<node>") used for buffer accounting + metrics.
+  // Multiple subscribers with the same id are allowed; events are
+  // fanned out independently.
+  string subscriber_id = 1;
+
+  // MaxEventsPerSec asks the server to throttle to N events/second
+  // for this subscriber. Zero = no client-side rate limit (server
+  // still applies its own backpressure cap).
+  uint32 max_events_per_sec = 2;
+
+  // TargetPod, when non-zero, restricts the stream to events whose
+  // origin Pod matches the namespace+name pair. Required on
+  // StreamFileOpen, optional on the others.
+  PodRef target_pod = 3;
+}
+
+// PodRef is a namespace+name pair the bridge correlates against
+// Tetragon's PodInfo block on every event.
+message PodRef {
+  string namespace = 1;
+  string name = 2;
+}
+
+// ProcessInfo is the resolver-style bundle every typed event carries.
+// Populated from Tetragon's process tree resolver on the
+// observing node.
+message ProcessInfo {
+  // PID inside the host PID namespace.
+  uint32 pid = 1;
+
+  // BinaryPath as seen from the host (resolved through
+  // /proc/<pid>/exe).
+  string binary_path = 2;
+
+  // ContainerId is the runtime-specific container ID
+  // (containerd:// stripped). Empty when the process is on
+  // the host.
+  string container_id = 3;
+
+  // Pod is the resolver-enriched namespace/name. Empty for
+  // host-only processes.
+  PodRef pod = 4;
+
+  // ServiceAccount username inferred from the Pod's SA token.
+  // Format: system:serviceaccount:<ns>:<name>.
+  string service_account = 5;
+}
+
+// ProcessExec is one PROCESS_EXEC observation.
+message ProcessExec {
+  google.protobuf.Timestamp timestamp = 1;
+  string node_name = 2;
+
+  ProcessInfo process = 3;
+
+  // ParentPid is the pid of the exec's parent process.
+  uint32 parent_pid = 4;
+
+  // Argv is the full argument vector as Tetragon captured it.
+  repeated string argv = 5;
+
+  // EnvHash is a SHA-256 over the env block (Tetragon does not
+  // forward the env values themselves to keep the wire surface
+  // small + privacy-clean).
+  string env_hash = 6;
+
+  // Capabilities is the effective capability set at exec time.
+  repeated string capabilities = 7;
+
+  // UidGid is the (uid, gid) pair the binary launched as.
+  uint32 uid = 8;
+  uint32 gid = 9;
+}
+
+// DNSQuery is one kprobe-observed DNS lookup. Subset of the
+// CoreDNS plugin DNSEvent contract — only the fields Tetragon
+// can populate from kprobe data.
+message DNSQuery {
+  google.protobuf.Timestamp timestamp = 1;
+  string node_name = 2;
+
+  ProcessInfo process = 3;
+
+  // Qname is the question name (FQDN, lowercased).
+  string qname = 4;
+
+  // Qtype is the RFC 1035 query type ("A", "AAAA", "TXT", ...).
+  string qtype = 5;
+
+  // DstIP is the upstream DNS server IP. 4-byte (v4) or 16-byte (v6).
+  bytes dst_ip = 6;
+
+  // DstPort is the destination port (53 in normal cluster DNS).
+  uint32 dst_port = 7;
+}
+
+// FileOpen is one open() observation. Used by seccomp-gen to record
+// the syscall + path surface during a training run.
+message FileOpen {
+  google.protobuf.Timestamp timestamp = 1;
+  string node_name = 2;
+
+  ProcessInfo process = 3;
+
+  // Path is the absolute path the syscall was made against.
+  string path = 4;
+
+  // Flags is the open(2) flags bitmap (O_RDONLY, O_WRONLY, ...).
+  uint32 flags = 5;
+
+  // Mode is the open(2) mode bitmap when O_CREAT is set; 0 otherwise.
+  uint32 mode = 6;
+
+  // Returncode is the syscall return value. < 0 indicates error
+  // (-EACCES, -ENOENT, ...).
+  int32 returncode = 7;
+}
