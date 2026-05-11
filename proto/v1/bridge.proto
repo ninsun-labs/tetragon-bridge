@@ -128,7 +128,7 @@ message ProcessExec {
 }
 
 // DNSQuery is one kprobe-observed DNS lookup. Subset of the
-// CoreDNS plugin DNSEvent contract — only the fields Tetragon
+// CoreDNS plugin DNSEvent contract - only the fields Tetragon
 // can populate from kprobe data.
 message DNSQuery {
   google.protobuf.Timestamp timestamp = 1;

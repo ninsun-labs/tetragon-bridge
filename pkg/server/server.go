@@ -28,7 +28,7 @@ const DefaultDefaultMaxEventsPerSec = 700
 type ServerConfig struct {
 	// BearerToken is the shared secret subscribers must present in
 	// the "authorization: Bearer <token>" metadata header. Empty =
-	// auth disabled (lab/dev only — never in cluster mTLS-off mode).
+	// auth disabled (lab/dev only - never in cluster mTLS-off mode).
 	BearerToken string
 
 	// PerSubscriberBuffer overrides the Hub ring depth. Zero falls
@@ -120,7 +120,7 @@ func (s *Server) StreamDNSQuery(req *bridgev1.SubscribeRequest, stream bridgev1.
 }
 
 // StreamFileOpen implements bridgev1.TetragonBridgeServer. Unlike the
-// other two streams, FileOpen requires target_pod — an unfiltered
+// other two streams, FileOpen requires target_pod - an unfiltered
 // open() firehose would saturate the bridge on a busy node.
 func (s *Server) StreamFileOpen(req *bridgev1.SubscribeRequest, stream bridgev1.TetragonBridge_StreamFileOpenServer) error {
 	if err := validateSubscribeRequest(req, true); err != nil {
@@ -201,7 +201,7 @@ func newLimiter(reqPerSec, defaultPerSec uint32) *rate.Limiter {
 		r = defaultPerSec
 	}
 	if r == 0 {
-		// Both unset — apply the type-default rather than 0 (which
+		// Both unset - apply the type-default rather than 0 (which
 		// would block forever). This branch should be unreachable
 		// because NewServer applies DefaultDefaultMaxEventsPerSec.
 		r = DefaultDefaultMaxEventsPerSec

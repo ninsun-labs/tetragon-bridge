@@ -18,5 +18,5 @@ git commit -s -m "feat(plugin): your change"
 ## CI
 
 Every PR runs build + test + lint. A release is cut by tagging
-`v<x.y.z>` on `main` — the release workflow signs the image with
+`v<x.y.z>` on `main` - the release workflow signs the image with
 cosign keyless and pushes to GHCR.

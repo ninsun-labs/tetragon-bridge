@@ -24,7 +24,7 @@ const (
 )
 
 // classifyKprobe maps the kernel function name Tetragon hooked into
-// the matching kprobeKind. The set is intentionally narrow — anything
+// the matching kprobeKind. The set is intentionally narrow - anything
 // outside it is dropped (and counted) so a future Tetragon shape
 // doesn't quietly leak into the wrong stream.
 func classifyKprobe(fn string) kprobeKind {
@@ -66,7 +66,7 @@ func translateProcess(src *tetragonv1.Process) *bridgev1.ProcessInfo {
 
 // translateProcessExec turns a Tetragon ProcessExec into a bridge
 // ProcessExec. Argv splits Tetragon's space-joined Arguments by the
-// same separator Tetragon uses internally (best-effort — the upstream
+// same separator Tetragon uses internally (best-effort - the upstream
 // API doesn't expose the original argv vector).
 func translateProcessExec(nodeName string, src *tetragonv1.ProcessExec) *bridgev1.ProcessExec {
 	if src == nil || src.GetProcess() == nil {
@@ -131,7 +131,7 @@ func translateDNSQuery(nodeName string, src *tetragonv1.ProcessKprobe) *bridgev1
 }
 
 // translateFileOpen extracts (path, flags, mode) from a fd_install /
-// security_file_open kprobe. Path is required — events without it
+// security_file_open kprobe. Path is required - events without it
 // are dropped (the kprobe can't have meaningfully fired).
 func translateFileOpen(nodeName string, src *tetragonv1.ProcessKprobe) *bridgev1.FileOpen {
 	if src == nil || src.GetProcess() == nil {
@@ -150,7 +150,7 @@ func translateFileOpen(nodeName string, src *tetragonv1.ProcessKprobe) *bridgev1
 				out.Path = v.FileArg.GetPath()
 				// Tetragon serialises flags as a "|"-joined string
 				// (e.g. "O_RDONLY|O_CLOEXEC"). The bridge stays on
-				// numeric flags for now — leaving 0 here is honest;
+				// numeric flags for now - leaving 0 here is honest;
 				// a follow-up can parse the string symbol set.
 			}
 		case *tetragonv1.KprobeArgument_PathArg:

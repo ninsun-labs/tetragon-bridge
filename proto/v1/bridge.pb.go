@@ -359,7 +359,7 @@ func (x *ProcessExec) GetGid() uint32 {
 }
 
 // DNSQuery is one kprobe-observed DNS lookup. Subset of the
-// CoreDNS plugin DNSEvent contract — only the fields Tetragon
+// CoreDNS plugin DNSEvent contract - only the fields Tetragon
 // can populate from kprobe data.
 type DNSQuery struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`

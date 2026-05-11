@@ -7,7 +7,7 @@
 // guards the listener, and a per-subscriber token-bucket rate
 // limiter applied at egress.
 //
-// Hub is independent of the upstream Tetragon source — the Hubble
+// Hub is independent of the upstream Tetragon source - the Hubble
 // adapter (cmd/tetragon-bridge wires it in pkg/hubble) calls
 // PublishProcessExec / PublishDNSQuery / PublishFileOpen as events
 // arrive. Subscribers obtain a channel via the matching Subscribe*
@@ -73,12 +73,12 @@ func (h *Hub) SubscribeProcessExec(ctx context.Context, id string) (<-chan *brid
 	return subscribe(ctx, h, h.procExec, id)
 }
 
-// SubscribeDNSQuery — see SubscribeProcessExec.
+// SubscribeDNSQuery - see SubscribeProcessExec.
 func (h *Hub) SubscribeDNSQuery(ctx context.Context, id string) (<-chan *bridgev1.DNSQuery, func()) {
 	return subscribe(ctx, h, h.dnsQuery, id)
 }
 
-// SubscribeFileOpen — see SubscribeProcessExec.
+// SubscribeFileOpen - see SubscribeProcessExec.
 func (h *Hub) SubscribeFileOpen(ctx context.Context, id string) (<-chan *bridgev1.FileOpen, func()) {
 	return subscribe(ctx, h, h.fileOpen, id)
 }
@@ -87,10 +87,10 @@ func (h *Hub) SubscribeFileOpen(ctx context.Context, id string) (<-chan *bridgev
 // for full subscribers are counted but never block the publisher.
 func (h *Hub) PublishProcessExec(ev *bridgev1.ProcessExec) { publish(h, h.procExec, ev) }
 
-// PublishDNSQuery — see PublishProcessExec.
+// PublishDNSQuery - see PublishProcessExec.
 func (h *Hub) PublishDNSQuery(ev *bridgev1.DNSQuery) { publish(h, h.dnsQuery, ev) }
 
-// PublishFileOpen — see PublishProcessExec.
+// PublishFileOpen - see PublishProcessExec.
 func (h *Hub) PublishFileOpen(ev *bridgev1.FileOpen) { publish(h, h.fileOpen, ev) }
 
 // SubscriberSnapshot is one row of telemetry the metrics endpoint
@@ -128,7 +128,7 @@ func subscribe[T any](ctx context.Context, h *Hub, table map[string]*subscriber[
 	s := &subscriber[T]{id: id, ch: make(chan T, h.bufSize)}
 	key := id
 	h.mu.Lock()
-	// Allow duplicate ids by appending a counter suffix — operators
+	// Allow duplicate ids by appending a counter suffix - operators
 	// that crash-loop and reconnect should not silently steal each
 	// other's buffers.
 	for i := 0; ; i++ {
@@ -165,8 +165,8 @@ func subscribe[T any](ctx context.Context, h *Hub, table map[string]*subscriber[
 }
 
 // publish fans ev out across the table. The drop-oldest-first
-// behaviour matches design 21 §D2.3: a slow subscriber loses
-// information but the publisher never blocks.
+// behaviour ensures a slow subscriber loses information but the
+// publisher never blocks.
 func publish[T any](h *Hub, table map[string]*subscriber[T], ev T) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -175,9 +175,8 @@ func publish[T any](h *Hub, table map[string]*subscriber[T], ev T) {
 		case s.ch <- ev:
 		default:
 			// Ring full: drop the oldest (incrementing the per-
-			// subscriber drop counter) and try the new one again.
-			// drop-oldest-first matches design 21 §D2.3 — the
-			// publisher never blocks.
+			// subscriber drop counter) and try the new one again so
+			// the publisher never blocks.
 			select {
 			case <-s.ch:
 				s.drops.Add(1)

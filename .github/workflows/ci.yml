@@ -42,7 +42,7 @@ jobs:
             proto/v1/bridge.proto
           for f in bridge.pb.go bridge_grpc.pb.go; do
             if ! diff -q "$tmp/proto/v1/$f" "proto/v1/$f"; then
-              echo "::error file=proto/v1/$f::Generated proto drift — re-run protoc"
+              echo "::error file=proto/v1/$f::Generated proto drift - re-run protoc"
               diff "$tmp/proto/v1/$f" "proto/v1/$f" | head -50
               exit 1
             fi

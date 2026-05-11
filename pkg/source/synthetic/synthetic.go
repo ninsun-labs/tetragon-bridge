@@ -97,7 +97,7 @@ func (s *Source) InjectProcessExec(ev *bridgev1.ProcessExec) {
 	hub.PublishProcessExec(ev)
 }
 
-// InjectDNSQuery — see InjectProcessExec.
+// InjectDNSQuery - see InjectProcessExec.
 func (s *Source) InjectDNSQuery(ev *bridgev1.DNSQuery) {
 	s.mu.Lock()
 	hub := s.hub
@@ -108,7 +108,7 @@ func (s *Source) InjectDNSQuery(ev *bridgev1.DNSQuery) {
 	hub.PublishDNSQuery(ev)
 }
 
-// InjectFileOpen — see InjectProcessExec.
+// InjectFileOpen - see InjectProcessExec.
 func (s *Source) InjectFileOpen(ev *bridgev1.FileOpen) {
 	s.mu.Lock()
 	hub := s.hub

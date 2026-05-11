@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local mirror of .github/workflows/ci.yml — run before every push.
+# Local mirror of .github/workflows/ci.yml - run before every push.
 # Mirrors the ugallu hack/ci-local.sh contract: green here = green
 # on GitHub Actions.
 
@@ -21,7 +21,7 @@ if command -v protoc >/dev/null && command -v protoc-gen-go >/dev/null && comman
     proto/v1/bridge.proto
   for f in bridge.pb.go bridge_grpc.pb.go; do
     if ! diff -q "$tmp/proto/v1/$f" "proto/v1/$f" >/dev/null; then
-      red "drift detected in proto/v1/$f — re-run protoc"
+      red "drift detected in proto/v1/$f - re-run protoc"
       diff "$tmp/proto/v1/$f" "proto/v1/$f" | head -20
       exit 1
     fi
@@ -39,7 +39,7 @@ section "test (race)"
 go test -race -timeout 120s ./...
 
 section "lint (golangci-lint)"
-# Burn the cache up front — local cache survives across runs and can
+# Burn the cache up front - local cache survives across runs and can
 # mask issues when config or linter version drifts (golangci/golangci-lint#5414).
 if command -v golangci-lint >/dev/null; then
   golangci-lint cache clean >/dev/null

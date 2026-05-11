@@ -13,7 +13,7 @@
 //	--source=synthetic  hand-crafted events for lab/dev clusters
 //	                    that don't have Tetragon installed yet.
 //	                    Accepts injection via the --synthetic-loop
-//	                    cadence (heartbeat) only — REST/CLI injection
+//	                    cadence (heartbeat) only - REST/CLI injection
 //	                    is intentionally not exposed in v0.1.0.
 package main
 

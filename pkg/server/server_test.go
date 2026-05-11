@@ -176,6 +176,6 @@ func TestStreamProcessExec_TargetPodFilter(t *testing.T) {
 			t.Errorf("NodeName = %q (filter let a non-match through)", r.ev.GetNodeName())
 		}
 	case <-rcvCtx.Done():
-		t.Fatal("Recv timed out — filter dropped the matching event")
+		t.Fatal("Recv timed out - filter dropped the matching event")
 	}
 }

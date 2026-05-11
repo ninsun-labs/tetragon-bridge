@@ -110,7 +110,7 @@ func TestTranslateDNSQuery_FromSockArg(t *testing.T) {
 }
 
 // TestTranslateDNSQuery_DropsIncomplete drops events without a Qname
-// or DstPort — those carry no useful signal for the detectors.
+// or DstPort - those carry no useful signal for the detectors.
 func TestTranslateDNSQuery_DropsIncomplete(t *testing.T) {
 	src := &tetragonv1.ProcessKprobe{
 		Process: &tetragonv1.Process{Pid: wrapperspb.UInt32(1)},

@@ -55,7 +55,7 @@ func TestHub_DropOldestOnFull(t *testing.T) {
 		h.PublishProcessExec(&bridgev1.ProcessExec{NodeName: "node-1"})
 	}
 
-	// Buffer has capacity 2 — at most 2 events readable. The third
+	// Buffer has capacity 2 - at most 2 events readable. The third
 	// publish onward must have incremented drops.
 	snap := h.Snapshot()
 	var drops uint64
@@ -113,7 +113,7 @@ func TestHub_DuplicateSubscriberIdsDoNotStealBuffers(t *testing.T) {
 				t.Errorf("ch[%d] received nil", i)
 			}
 		case <-time.After(time.Second):
-			t.Fatalf("ch[%d] did not receive event — duplicate ids stole each other's buffer", i)
+			t.Fatalf("ch[%d] did not receive event - duplicate ids stole each other's buffer", i)
 		}
 	}
 }

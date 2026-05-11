@@ -171,7 +171,7 @@ func (s *Source) dispatch(hub *server.Hub, resp *tetragonv1.GetEventsResponse) {
 				hub.PublishFileOpen(fo)
 			}
 		default:
-			// Unknown kprobe shape — dropped silently. Counter
+			// Unknown kprobe shape - dropped silently. Counter
 			// surfaces the rate (metrics package).
 		}
 	}
