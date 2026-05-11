@@ -15,6 +15,9 @@ concurrency:
 env:
   GO_VERSION: '1.26.2'
   GOLANGCI_LINT_VERSION: v2.11.4
+  PROTOC_VERSION: '25.1'
+  PROTOC_GEN_GO_VERSION: 'v1.36.11'
+  PROTOC_GEN_GO_GRPC_VERSION: 'v1.6.1'
 
 jobs:
   proto-drift:
@@ -27,12 +30,15 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
           cache-dependency-path: '**/go.sum'
-      - name: Install protoc + plugins
+      - name: Install protoc + plugins (pinned)
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y protobuf-compiler
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          curl -sSL -o /tmp/protoc.zip \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+          sudo unzip -o -q /tmp/protoc.zip -d /usr/local
+          sudo chmod +x /usr/local/bin/protoc
+          protoc --version
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}
       - name: Regenerate + diff
         run: |
           tmp="$(mktemp -d)"

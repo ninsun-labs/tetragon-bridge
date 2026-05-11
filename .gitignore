@@ -1,5 +1,6 @@
 bin/
 dist/
+.cache/
 # Compiled binary dropped at repo root by `go build ./...`
 /tetragon-bridge
 *.test
