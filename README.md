@@ -29,12 +29,12 @@ drop-oldest-first backpressure, bearer-token auth, and a built-in
 synthetic source for lab clusters that don't have Tetragon
 installed yet.
 
-> **Status:** `v0.1.0` (first functional release). Pre-`v1.0.0`
-> minor versions may break compat.
+> **Status:** `v0.1.1`. Pre-`v1.0.0` minor versions may break
+> compat.
 
 ## Capability matrix
 
-| Capability | v0.1.0 |
+| Capability | v0.1.1 |
 |---|---|
 | Typed gRPC streams (`StreamProcessExec`, `StreamDNSQuery`, `StreamFileOpen`) | yes |
 | Per-subscriber ring buffer with drop-oldest-first | yes (default 10000) |
@@ -52,7 +52,7 @@ installed yet.
 
 | Bridge version | Tetragon | Notes |
 |---|---|---|
-| 0.1.0 | >= 1.0 (tested), <= 1.x (best-effort) | Hubble `GetEvents` surface has been stable since 1.0 |
+| 0.1.1 | >= 1.0 (tested), <= 1.x (best-effort) | Hubble `GetEvents` surface has been stable since 1.0 |
 
 Each release pins the tested Tetragon version range. Outside the
 declared range the bridge may compile but is not validated.
@@ -83,7 +83,7 @@ contract.
 Distributed as a multi-arch OCI image:
 
 ```
-ghcr.io/ninsun-labs/tetragon-bridge:v0.1.0
+ghcr.io/ninsun-labs/tetragon-bridge:v0.1.1
 ```
 
 The companion Helm sub-chart `tetragon-bridge` (consumable as a
@@ -101,7 +101,7 @@ verify:
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   --certificate-identity-regexp 'https://github.com/ninsun-labs/tetragon-bridge/.+' \
-  ghcr.io/ninsun-labs/tetragon-bridge:v0.1.0
+  ghcr.io/ninsun-labs/tetragon-bridge:v0.1.1
 ```
 
 ## License
