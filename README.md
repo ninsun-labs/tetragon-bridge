@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://github.com/ninsun-labs/tetragon-bridge/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ninsun-labs/tetragon-bridge/ci.yml?branch=main&label=ci&logo=github&style=flat-square"></a>
   <a href="https://github.com/ninsun-labs/tetragon-bridge/releases"><img alt="Release" src="https://img.shields.io/github/v/release/ninsun-labs/tetragon-bridge?include_prereleases&label=release&style=flat-square&color=00e5ff"></a>
-  <a href="https://github.com/ninsun-labs/tetragon-bridge/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/ninsun-labs/tetragon-bridge?style=flat-square"></a>
+  <a href="https://github.com/ninsun-labs/tetragon-bridge/blob/main/LICENSE.md"><img alt="License" src="https://img.shields.io/github/license/ninsun-labs/tetragon-bridge?style=flat-square"></a>
   <a href="https://goreportcard.com/report/github.com/ninsun-labs/tetragon-bridge"><img alt="Go Report" src="https://goreportcard.com/badge/github.com/ninsun-labs/tetragon-bridge?style=flat-square"></a>
   <a href="https://pkg.go.dev/github.com/ninsun-labs/tetragon-bridge"><img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/ninsun-labs/tetragon-bridge.svg"></a>
   <a href="https://ugallu.io"><img alt="Docs" src="https://img.shields.io/badge/docs-ugallu.io-00e5ff?style=flat-square"></a>
@@ -106,7 +106,7 @@ cosign verify \
 
 ## License
 
-[Apache-2.0](LICENSE). DCO sign-off required on every commit
+[Apache-2.0](LICENSE.md). DCO sign-off required on every commit
 (`git commit -s`).
 
 ## Contributing
